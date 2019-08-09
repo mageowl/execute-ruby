@@ -134,13 +134,13 @@ module ER_Keyword_Compiler
                 return self.handleOperator(words[1]) == self.handleOperator(words[3])
             when ">"
                 if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
-                    return (self.handleOperator(words[1]).to_i > self.handleOperator(words[3]).to_i).to_s
+                    return self.handleOperator(words[1]).to_i > self.handleOperator(words[3]).to_i
                 else
                     raise "The '>' condition must be used on two numbers. One or two inputs are not a integer.".pink
                 end
             when "<"
                 if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
-                    return (self.handleOperator(words[1]).to_i < self.handleOperator(words[3]).to_i).to_s
+                    return self.handleOperator(words[1]).to_i < self.handleOperator(words[3]).to_i
                 else
                     raise "The '<' condition must be used on two numbers. One or two inputs are not a integer.".pink
                 end
