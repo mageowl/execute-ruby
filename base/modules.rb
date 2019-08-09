@@ -67,7 +67,7 @@ module ER_Keyword_Compiler
             when "set"
                 ER_Program_Varibles.setVar(words[1], self.handleOperator(words[3..words.length].join(" ")))
             when "if"
-                if self.handleOperator(words[1]) == self.handleOperator(words[3])
+                if self.handleCondition(words)
                     self.compile(words[5..words.length])
                 end
         end
@@ -124,6 +124,26 @@ module ER_Keyword_Compiler
             end
         else
             return word
+        end
+    end
+
+    def self.handleCondition(words)
+        type = words[2]
+        case type
+            when "="
+                return self.handleOperator(words[1]) == self.handleOperator(words[3])
+            when ">"
+                if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
+                    return (self.handleOperator(words[1]).to_i > self.handleOperator(words[3]).to_i).to_s
+                else
+                    raise "The '>' condition must be used on two numbers. One or two inputs are not a integer.".pink
+                end
+            when "<"
+                if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
+                    return (self.handleOperator(words[1]).to_i < self.handleOperator(words[3]).to_i).to_s
+                else
+                    raise "The '<' condition must be used on two numbers. One or two inputs are not a integer.".pink
+                end
         end
     end
 end
