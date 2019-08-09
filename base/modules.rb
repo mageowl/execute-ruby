@@ -2,7 +2,7 @@ load "color.rb"
 
 module ER_Parser
     def self.parseline(text)
-        if text == "\n" 
+        if text == "\n"
             return true
         end
 
@@ -11,6 +11,13 @@ module ER_Parser
         chunk = self.formatWord words[0]
         case (chunk[:type])
             when "keyword"
+                if ER_Program_Varibles.functionname != "none" && words[0] != "end" then
+                    if (!ER_Program_Varibles::VARIBLES[ER_Program_Varibles.functionname])
+                        ER_Program_Varibles.setVar(ER_Program_Varibles.functionname, "")
+                    end
+                    ER_Program_Varibles.setVar(ER_Program_Varibles.functionname, ER_Program_Varibles::VARIBLES[ER_Program_Varibles.functionname] + words.join(" ") + "#n")
+                    return true
+                end
                 returnEvent = ER_Keyword_Compiler.compile words
                 if returnEvent
                     outsideEvent = ER_Keyword_Compiler.handleReturnEvent returnEvent
@@ -26,10 +33,12 @@ module ER_Parser
     end
 
     def self.formatWord(word) 
-        if ER_Word_Type::KEYWORDS.include? word
+        if ER_Word_Type::KEYWORDS.include? word then
             return {type: "keyword", value: word}
-        elsif ER_Word_Type::OPERATORS.include? word
+        elsif ER_Word_Type::OPERATORS.include? word then
             return {type: "operator", value: word}
+        elsif ER_Word_Type::VALUES[word] != nil then
+            return {type: "value", value: ER_Word_Type::VALUES[word]}
         else
             return {type: "string", value: word}
         end
@@ -37,8 +46,9 @@ module ER_Parser
 end
 
 module ER_Word_Type
-    KEYWORDS = ["write", "writeColor", "kill", "set", "if"]
-    OPERATORS = ["get", "color", "input"]
+    KEYWORDS = ["write", "writeColor", "kill", "set", "if", "#", "while", "function", "end", "run", "change"]
+    OPERATORS = ["get", "color", "input", "add"]
+    VALUES = {false: false, true: true, none: nil}
 end
 
 module ER_Keyword_Compiler
@@ -67,9 +77,29 @@ module ER_Keyword_Compiler
             when "set"
                 ER_Program_Varibles.setVar(words[1], self.handleOperator(words[3..words.length].join(" ")))
             when "if"
-                if self.handleCondition(words)
+                if self.handleCondition(words[1..3])
                     self.compile(words[5..words.length])
                 end
+            when "while"
+                while true
+                    self.compile(words[5..words.length])
+                    if (!self.handleCondition(words[1..3]))
+                        break
+                    end
+                end
+            when "end"
+                ER_Program_Varibles.setFunction("none")
+            when "function"
+                if ER_Parser.formatWord(words[1])[:type] != "string" then
+                    raise "#{words[1]} is not a string, therfor cannont be used as a function name.".pink
+                end
+                ER_Program_Varibles.setFunction words[1]
+            when "run"
+                ER_Program_Varibles::VARIBLES[words[1]].split("#n").each do |line|
+                    ER_Parser.parseline(line)
+                end
+            when "change"
+                ER_Program_Varibles.setVar(words[1], ER_Program_Varibles::VARIBLES[words[1]].to_i + words[3].to_i)
         end
         false
     end
@@ -128,19 +158,19 @@ module ER_Keyword_Compiler
     end
 
     def self.handleCondition(words)
-        type = words[2]
+        type = words[1]
         case type
             when "="
-                return self.handleOperator(words[1]) == self.handleOperator(words[3])
+                return self.handleOperator(words[0]) == self.handleOperator(words[2])
             when ">"
-                if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
-                    return self.handleOperator(words[1]).to_i > self.handleOperator(words[3]).to_i
+                if self.handleOperator(words[0]).is_i? && self.handleOperator(words[2]).is_i? then
+                    return self.handleOperator(words[0]).to_i > self.handleOperator(words[2]).to_i
                 else
                     raise "The '>' condition must be used on two numbers. One or two inputs are not a integer.".pink
                 end
             when "<"
-                if (self.handleOperator(words[1]).is_i? && self.handleOperator(words[3]).is_i?)
-                    return self.handleOperator(words[1]).to_i < self.handleOperator(words[3]).to_i
+                if self.handleOperator(words[0]).is_i? && self.handleOperator(words[2]).is_i? then
+                    return self.handleOperator(words[0]).to_i < self.handleOperator(words[2]).to_i
                 else
                     raise "The '<' condition must be used on two numbers. One or two inputs are not a integer.".pink
                 end
@@ -149,10 +179,20 @@ module ER_Keyword_Compiler
 end
 
 module ER_Program_Varibles
+
     VARIBLES = {}
+    @@functionname = "none"
+
+    def self.setFunction(value)
+        @@functionname = value
+    end
 
     def self.setVar(id, value)
         VARIBLES[id] = value
+    end
+
+    def self.functionname
+        @@functionname
     end
 
     def self.deleteVar(id)

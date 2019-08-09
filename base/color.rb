@@ -30,6 +30,6 @@ class String
 end
 class String
 	def is_i?
-   		!!(self =~ /\A[-+]?[0-9]+\z/)
+   		!!(self =~ /-?[0-9]/)
 	end
 end

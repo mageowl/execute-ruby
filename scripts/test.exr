@@ -1,0 +1,10 @@
+
+function tick
+write get:i
+change i by 1
+end
+
+write LOL
+
+set i to 1
+while get:i < 6 then run tick
